@@ -1,8 +1,15 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from from_root import from_root
 from datetime import datetime
+
+# simple helper to compute project root path without external dependency
+
+def from_root() -> str:
+    """Return absolute path to the project root (two levels up from this file)."""
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    )
 
 # Constants for log configuration
 LOG_DIR = 'logs'
