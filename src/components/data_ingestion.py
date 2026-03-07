@@ -1,5 +1,6 @@
 import os
 import sys
+import pandas as pd
 
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
@@ -24,23 +25,52 @@ class DataIngestion:
     def export_data_into_feature_store(self)->DataFrame:
         """
         Method Name :   export_data_into_feature_store
-        Description :   This method exports data from mongodb to csv file
+        Description :   This method exports data from mongodb to csv file.  If the
+        environment variable for MongoDB is missing we fall back to any previously
+        saved feature-store CSV so that the pipeline can run offline.
         
         Output      :   data is returned as artifact of data ingestion components
         On Failure  :   Write an exception log and then raise an exception
         """
         try:
-            logging.info(f"Exporting data from mongodb")
-            my_data = Proj1Data()
-            dataframe = my_data.export_collection_as_dataframe(collection_name=
-                                                                   self.data_ingestion_config.collection_name)
-            logging.info(f"Shape of dataframe: {dataframe.shape}")
+            mongo_url = os.getenv("MONGODB_URL")
             feature_store_file_path  = self.data_ingestion_config.feature_store_file_path
             dir_path = os.path.dirname(feature_store_file_path)
             os.makedirs(dir_path,exist_ok=True)
-            logging.info(f"Saving exported data into feature store file path: {feature_store_file_path}")
-            dataframe.to_csv(feature_store_file_path,index=False,header=True)
-            return dataframe
+
+            if mongo_url:
+                logging.info(f"Exporting data from mongodb")
+                my_data = Proj1Data()
+                dataframe = my_data.export_collection_as_dataframe(collection_name=
+                                                                       self.data_ingestion_config.collection_name)
+                logging.info(f"Shape of dataframe: {dataframe.shape}")
+                logging.info(f"Saving exported data into feature store file path: {feature_store_file_path}")
+                dataframe.to_csv(feature_store_file_path,index=False,header=True)
+                return dataframe
+            else:
+                # offline mode
+                logging.info("MONGODB_URL not set; attempting to load existing feature store CSV")
+                if os.path.exists(feature_store_file_path):
+                    dataframe = pd.read_csv(feature_store_file_path)
+                    logging.info(f"Loaded dataframe from {feature_store_file_path}, shape {dataframe.shape}")
+                    return dataframe
+
+                # if the file isn't present in the *current* artifact folder we can
+                # try to reuse a previous run's export.  look through the
+                # `artifact/*/data_ingestion/feature_store` directories and pick
+                # the most recent file.
+                import glob
+                pattern = os.path.join(os.getcwd(), "artifact", "*", "data_ingestion", "feature_store", "*.csv")
+                candidates = glob.glob(pattern)
+                if candidates:
+                    candidates.sort(key=os.path.getmtime, reverse=True)
+                    last_file = candidates[0]
+                    logging.info(f"Loading previous export from {last_file}")
+                    dataframe = pd.read_csv(last_file)
+                    logging.info(f"Loaded dataframe shape {dataframe.shape}")
+                    return dataframe
+
+                raise Exception("MONGODB_URL is not set and no local feature store file exists")
 
         except Exception as e:
             raise MyException(e,sys)

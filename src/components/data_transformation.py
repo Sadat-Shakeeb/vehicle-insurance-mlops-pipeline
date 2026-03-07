@@ -96,11 +96,23 @@ class DataTransformation:
         return df
 
     def _drop_id_column(self, df):
-        """Drop the 'id' column if it exists."""
-        logging.info("Dropping 'id' column")
-        drop_col = self._schema_config['drop_columns']
-        if drop_col in df.columns:
+        """Drop identifier columns if they exist.
+
+        Historically the schema used `"_id"` but the dataset actually
+        contains a column called `id`.  The transformer should remove
+        whichever is present so that the preprocessing object never learns
+        from this useless identifier.  This also accommodates any saved
+        preprocessor that still expects `id` (see prediction pipeline
+        adjustments below).
+        """
+        logging.info("Dropping identifier column(s)")
+        # schema may specify a column name to drop; if it's present remove it
+        drop_col = self._schema_config.get('drop_columns')
+        if drop_col and drop_col in df.columns:
             df = df.drop(drop_col, axis=1)
+        # drop plain `id` as well for compatibility
+        if 'id' in df.columns:
+            df = df.drop('id', axis=1)
         return df
 
     def initiate_data_transformation(self) -> DataTransformationArtifact:

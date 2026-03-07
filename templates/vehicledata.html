@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Vehicle Insurance Predictor</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Vehicle Insurance Prediction</h1>
+
+<form method="post">
+
+<div>
+<label>Gender</label>
+<select name="Gender">
+<option value="1">Male</option>
+<option value="0">Female</option>
+</select>
+</div>
+
+<div>
+<label>Age</label>
+<input type="number" name="Age" required>
+</div>
+
+<div>
+<label>Driving License</label>
+<select name="Driving_License">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+</div>
+
+<div>
+<label>Region Code</label>
+<input type="number" name="Region_Code" step="0.01">
+</div>
+
+<div>
+<label>Previously Insured</label>
+<select name="Previously_Insured">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+</div>
+
+<div>
+<label>Annual Premium</label>
+<input type="number" name="Annual_Premium">
+</div>
+
+<div>
+<label>Policy Sales Channel</label>
+<input type="number" name="Policy_Sales_Channel">
+</div>
+
+<div>
+<label>Vintage (Days)</label>
+<input type="number" name="Vintage">
+</div>
+
+<div>
+<label>Vehicle Age < 1 Year</label>
+<select name="Vehicle_Age_lt_1_Year">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+</div>
+
+<div>
+<label>Vehicle Age > 2 Years</label>
+<select name="Vehicle_Age_gt_2_Years">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+</div>
+
+<div class="full">
+<label>Vehicle Damage</label>
+<select name="Vehicle_Damage_Yes">
+<option value="1">Yes</option>
+<option value="0">No</option>
+</select>
+</div>
+
+<button class="predict full" type="submit">
+Predict Insurance Purchase
+</button>
+
+</form>
+
+<form action="/train" method="get">
+
+<button class="train full">
+Train Model
+</button>
+
+</form>
+
+{% if context %}
+<div class="result">
+Prediction Result: {{ context }}
+</div>
+{% endif %}
+
+</div>
+
+</body>
+</html>
